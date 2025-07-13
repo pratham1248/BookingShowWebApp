@@ -1,2 +1,15 @@
 # BookingShowWebApp
-This is dancing workshop show booking website. Secure login ensures your information stays private and no other people can access your information as all Api's are strictly restricted for unauthorized access using custom jwt tokens. User's password is saved in encrypted format for more security and better user experience.
+Technology Used:
+Frontend: Html,CSS and Js
+Backend: NodeJs and python serverless (Using AWS lambda)
+Database: AWS Dynamodb for user signup & AWS RDS Mysql for storing workshop and booking related data
+
+Configuration:
+NodeJs version 22+, Python 3.10/3.11
+Mysql -> DBname-mydb, User-admin , Password-Admin_123
+Dynamodb -> Table Name-Userdata-> partition key-username
+
+Add layer for running lambda functions-> Lib-pymysql,bcrypt and jsonwebtoken
+Add some data in mysql database from mysql client.
+
+
