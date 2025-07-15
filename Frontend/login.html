@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f3f3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+      width: 350px;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #28a745;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #218838;
+    }
+
+    .error {
+      color: red;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .success {
+      color: green;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .links {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .links a {
+      color: #007bff;
+      text-decoration: none;
+      margin: 0 5px;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Login</h2>
+    <div id="message"></div>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+
+    <div class="links">
+      <p>
+        Don’t have an account? <a href="signup.html">Sign Up</a><br>
+        <a href="forgot.html">Forgot Password?</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const message = document.getElementById("message");
+  
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+  
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+  
+      const payload = { username, password };
+  
+      try {
+        const response = await fetch("https://1yuv9m10td.execute-api.us-east-1.amazonaws.com/Prod/LoginUser", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+  
+        const data = await response.json();
+  
+        if (response.ok && data.valid === true && data.token) {
+          // ✅ Store the JWT token in sessionStorage
+          sessionStorage.setItem("jwtToken", data.token);
+  
+          message.textContent = "✅ Login successful!";
+          message.className = "success";
+
+  
+          // ✅ Redirect ONLY if token was successfully saved
+          if (sessionStorage.getItem("jwtToken")) {
+    window.location.href = `index.html?username=${encodeURIComponent(username)}`;
+  } else {
+    message.textContent = "❌ Token storage failed — please try again.";
+    message.className = "error";
+  }
+
+
+        } else {
+          message.textContent = "❌ Invalid username or password.";
+          message.className = "error";
+        }
+      } catch (err) {
+        message.textContent = `❌ Network error: ${err.message}`;
+        message.className = "error";
+      }
+    });
+  </script>
+  
+  
+
+</body>
+</html>
+

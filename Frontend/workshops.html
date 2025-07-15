@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Workshops</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<!-- workshops.html -->
+<body>
+    <h1 id="title"></h1>
+    <button id="logout-button">Logout</button>
+    <div id="workshops"></div>
+  
+    <script>
+        const query = new URLSearchParams(window.location.search);
+        const cityId = query.get("cityId");
+        const cityName = query.get("cityName");
+        const username = query.get("username");
+
+        if (sessionStorage.getItem("refreshOnReturn") === "true") {
+  sessionStorage.removeItem("refreshOnReturn");
+  location.reload(); // 💥 Now refresh triggers only when you return
+}
+
+
+        document.getElementById("logout-button")?.addEventListener("click", () => {
+  // 🧹 Clear session token and related data
+  if (confirm("Are you sure you want to log out?")) { 
+    sessionStorage.removeItem("jwtToken");
+  sessionStorage.removeItem("username");
+  sessionStorage.removeItem("lastCityId");
+  sessionStorage.removeItem("lastCityName");
+
+  // 🚪 Redirect to login
+  window.location.href = "login.html";
+  }
+
+  
+});
+      
+        document.getElementById("title").textContent = `${cityName} Workshops`;
+        const container = document.getElementById("workshops");
+        const token = sessionStorage.getItem("jwtToken");
+        async function loadSlots() {
+          try {
+            // Step 1️⃣: Get slots for the selected city
+            const slotResponse = await fetch("https://1yuv9m10td.execute-api.us-east-1.amazonaws.com/Prod/GetSlots", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ city_id: cityId })
+            });
+            const slotRaw = await slotResponse.json();
+            //const slots = JSON.parse(slotRaw.body);
+      
+            // Step 2️⃣: Get booked slot_ids for the user in that city
+            const bookingResponse = await fetch("https://1yuv9m10td.execute-api.us-east-1.amazonaws.com/Prod/BookedSlots", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ username, city_id: cityId })
+            });
+            const bookingRaw = await bookingResponse.json();
+            //const booked = JSON.parse(bookingRaw.body);
+            const bookedIds = bookingRaw.map(entry => entry.slot_id);
+      
+            // Step 3️⃣: Render slot cards and style the booked ones
+            slotRaw.forEach((slotObj, index) => {
+              const div = document.createElement("div");
+              div.className = "workshop-card";
+      
+              const isBooked = bookedIds.includes(slotObj.slot_id);
+              const buttonText = isBooked ? "Booked" : "Book Now";
+              const buttonColor = isBooked ? "red" : "#28a745";
+      
+              div.innerHTML = `
+                <h3>${slotObj.slot_name}</h3>
+                <div class="slot">
+                  <span>Show ${index + 1}</span>
+                  <span>Seats Available: <strong>${slotObj.available_seats}</strong></span>
+                  <button 
+                    style="background-color: ${buttonColor}; color: white;"
+                    ${isBooked ? "disabled" : ""}
+                    onclick="bookSlot('${username}', ${slotObj.slot_id})"
+                  >${buttonText}</button>
+                </div>
+              `;
+              container.appendChild(div);
+            });
+      
+          } catch (error) {
+            container.innerHTML = "<p>❌ Failed to load slots.</p>";
+            console.error("Error fetching slots/bookings:", error);
+          }
+        }
+        
+        if (!token) {
+      alert("⚠️ Session expired. Please log in again.");
+      window.location.href = "login.html";
+    } else {
+      loadSlots();
+    }
+        
+
+        
+      
+        function bookSlot(username, slotId) {
+          if (!token) {
+      alert("⚠️ Session expired. Please log in again.");
+      window.location.href = "login.html";
+    } else {
+          sessionStorage.setItem("refreshOnReturn", "true");
+          window.location.href = `payment.html?username=${encodeURIComponent(username)}&slot=${slotId}`;
+    }
+        }
+      </script>
+      
+      
+  </body>
+  
+</html>
