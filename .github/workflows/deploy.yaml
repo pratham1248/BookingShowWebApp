@@ -1,0 +1,49 @@
+name: 🚀 Deploy Backend to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout source code
+      uses: actions/checkout@v3
+
+    - name: 📦 Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    - name: 🔧 Install dependencies
+      run: |
+        cd backend
+        npm install
+
+    - name: 🧹 Clean & zip backend
+      run: |
+        cd backend
+        zip -r app.zip . -x "node_modules/*" ".env" ".git/*" ".github/*"
+
+    - name: 🚀 Deploy to Elastic Beanstalk
+      uses: einaregilsson/beanstalk-deploy@v21
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        region: ${{ secrets.AWS_REGION }}
+        application_name: BookingShowBackend       # Replace with your actual EB app name
+        environment_name: BookingShowBackend-env   # Replace with your EB environment
+        version_label: "v-${{ github.run_number }}"
+        zip_file: backend/app.zip
+        environment_variables: |
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
