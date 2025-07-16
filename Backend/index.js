@@ -202,6 +202,57 @@ app.post("/bookedSlots", async (req, res) => {
 });
 
 
+app.post("/bookSlot", async (req, res) => {
+  const { username, slot_id } = req.body;
+
+  if (!username || !slot_id) {
+    return res.status(400).json({ message: "❌ username and slot_id are required" });
+  }
+
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME
+    });
+
+    // 1️⃣ Insert booking record
+    await connection.execute(
+      `
+      INSERT INTO Booking (username, slot_id, booking_date)
+      VALUES (?, ?, CURDATE())
+      `,
+      [username, slot_id]
+    );
+
+    // 2️⃣ Decrease available seats only if seats > 0
+    const [updateResult] = await connection.execute(
+      `
+      UPDATE Slot
+      SET available_seats = available_seats - 1
+      WHERE slot_id = ? AND available_seats > 0
+      `,
+      [slot_id]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(409).json({ message: "❌ No available seats for this slot" });
+    }
+
+    await connection.commit();
+    res.status(200).json({ message: "✅ Booking successful" });
+
+  } catch (error) {
+    console.error("❌ Booking Error:", error.message);
+    res.status(500).json({ message: "❌ Booking failed", error: error.message });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+
 app.listen(3000, () => {
   console.log("🕺 Dance API running on http://localhost:3000");
 });

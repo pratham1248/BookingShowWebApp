@@ -102,7 +102,7 @@
   
       // Call your booking API
       try {
-        const response = await fetch("https://1yuv9m10td.execute-api.us-east-1.amazonaws.com/Prod/BookShow", {
+        const response = await fetch("http://localhost:3000/bookSlot", {
           method: "POST",
           headers: { "Authorization": `Bearer ${token}`,"Content-Type": "application/json" },
           body: JSON.stringify({
