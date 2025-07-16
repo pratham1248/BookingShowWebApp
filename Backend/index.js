@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { GetCommand } = require("@aws-sdk/lib-dynamodb");
-
+const mysql = require("mysql2/promise");
 
 const cors = require("cors");
 
@@ -104,6 +104,102 @@ app.post("/SubmitData", async (req, res) => {
   }
 });
 
+
+
+app.get("/cities", async (req, res) => {
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME
+    });
+
+    const [rows] = await connection.execute("SELECT * FROM City");
+
+    res.status(200).json(rows);
+
+  } catch (error) {
+    console.error("❌ DB Error:", error.message);
+    res.status(500).json({ message: "❌ Server error", error: error.message });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+
+
+app.post("/slots", async (req, res) => {
+  const { city_id } = req.body;
+
+  if (!city_id) {
+    return res.status(400).json({ message: "❌ city_id is required" });
+  }
+
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME
+    });
+
+    const [rows] = await connection.execute(
+      "SELECT * FROM Slot WHERE city_id = ?",
+      [city_id]
+    );
+
+    res.status(200).json(rows);
+
+  } catch (error) {
+    console.error("❌ DB Error:", error.message);
+    res.status(500).json({ message: "❌ Failed to fetch slots", error: error.message });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+
+app.post("/bookedSlots", async (req, res) => {
+  const { username, city_id } = req.body;
+
+  if (!username || !city_id) {
+    return res.status(400).json({ message: "❌ username and city_id are required" });
+  }
+
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME
+    });
+
+    const [rows] = await connection.execute(
+      `
+      SELECT b.slot_id
+      FROM Booking b
+      JOIN Slot s ON b.slot_id = s.slot_id
+      WHERE b.username = ? AND s.city_id = ?
+      `,
+      [username, city_id]
+    );
+
+    res.status(200).json(rows);
+
+  } catch (error) {
+    console.error("❌ Query Error:", error.message);
+    res.status(500).json({
+      message: "❌ Failed to fetch booked slots",
+      error: error.message
+    });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
 
 
 app.listen(3000, () => {

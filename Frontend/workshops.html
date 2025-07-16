@@ -44,7 +44,7 @@
         async function loadSlots() {
           try {
             // Step 1️⃣: Get slots for the selected city
-            const slotResponse = await fetch("https://1yuv9m10td.execute-api.us-east-1.amazonaws.com/Prod/GetSlots", {
+            const slotResponse = await fetch("http://localhost:3000/slots", {
               method: "POST",
               headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
               body: JSON.stringify({ city_id: cityId })
@@ -53,7 +53,7 @@
             //const slots = JSON.parse(slotRaw.body);
       
             // Step 2️⃣: Get booked slot_ids for the user in that city
-            const bookingResponse = await fetch("https://1yuv9m10td.execute-api.us-east-1.amazonaws.com/Prod/BookedSlots", {
+            const bookingResponse = await fetch("http://localhost:3000/bookedSlots", {
               method: "POST",
               headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
               body: JSON.stringify({ username, city_id: cityId })
