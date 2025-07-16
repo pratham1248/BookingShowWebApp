@@ -1,10 +1,11 @@
 // index.js
+require("dotenv").config();
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { GetCommand } = require("@aws-sdk/lib-dynamodb");
-require("dotenv").config();
+
 
 const cors = require("cors");
 
@@ -23,6 +24,7 @@ const client = new DynamoDBClient({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
   }
 });
+console.log("Region:", process.env.AWS_REGION);
 
 app.post("/LoginUser", async (req, res) => {
   try {
